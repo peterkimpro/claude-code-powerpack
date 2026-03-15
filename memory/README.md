@@ -40,3 +40,25 @@ Don't mock the database in tests — use a real test DB.
 - `feedback` memories are the highest-value type (prevent repeated mistakes)
 - Update or delete stale memories — outdated context is worse than no context
 - Tell Claude to remember something: "remember that we use X pattern here"
+
+---
+
+## Advanced: claude-mem Plugin
+
+For teams or long-running projects, [`claude-mem`](https://github.com/thedotmack/claude-mem) is a full memory compression system built as a Claude Code plugin.
+
+**What it adds over the built-in memory system:**
+- Automatic observation capture via lifecycle hooks (no manual "remember this")
+- SQLite + Chroma vector DB for semantic search across session history
+- ~10x token savings through layered memory retrieval (index → timeline → details)
+- Web viewer at `localhost:37777` to inspect stored memory
+- AST-powered code navigation (6–12x token reduction for code-heavy work)
+
+**Install:**
+```
+/plugin marketplace add thedotmack/claude-mem
+```
+
+**When to use it:** Once your project has enough history that manually maintaining `MEMORY.md` becomes overhead, or when you need semantic search over past decisions rather than just structured notes.
+
+The built-in memory system in this quickstart is simpler and sufficient for most projects. `claude-mem` is the upgrade path when you outgrow it.

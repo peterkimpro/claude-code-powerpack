@@ -11,6 +11,10 @@
       "Bash(git fetch *)",
       "Bash(git stash *)"
     ],
-    "deny": []
+    "deny": [
+      "Read(./package-lock.json)",
+      "Read(./node_modules/**)",
+      "Read(./.DS_Store)"
+    ]
   }
 }

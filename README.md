@@ -68,12 +68,19 @@ Edit `.claude/settings.json` to add your project's common commands:
       "Bash(npm run build)",
       "Bash(npm test)",
       "Bash(npm run lint)"
+    ],
+    "deny": [
+      "Read(./package-lock.json)",
+      "Read(./node_modules/**)",
+      "Read(./.DS_Store)"
     ]
   }
 }
 ```
 
-Add whatever commands Claude runs repeatedly. Allowlisting them removes the approval prompt and cuts iteration overhead significantly.
+**Allow:** Commands Claude runs repeatedly. Allowlisting removes the approval prompt and cuts iteration overhead significantly.
+
+**Deny:** Files Claude should never read. `node_modules` and `package-lock.json` are pure token waste — Claude will crawl them if not blocked. Add any other large auto-generated files in your project.
 
 ## Key Concepts
 
@@ -167,6 +174,16 @@ MCP (Model Context Protocol) servers extend Claude with external tools — file 
 ```
 
 See [MCP server directory](https://github.com/modelcontextprotocol/servers) for available servers.
+
+## Plugins
+
+Claude Code supports plugins installable via `/plugin marketplace add <author/repo>`.
+
+| Plugin | What it does | Install |
+|--------|-------------|---------|
+| [claude-mem](https://github.com/thedotmack/claude-mem) | Persistent memory compression — SQLite + vector DB, auto-capture via hooks, ~10x token savings, web viewer | `/plugin marketplace add thedotmack/claude-mem` |
+
+See `memory/README.md` for when to use `claude-mem` vs. the built-in memory system.
 
 ## Resources
 
