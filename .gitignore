@@ -1,0 +1,9 @@
+# Claude Code local settings (contains machine-specific paths and personal preferences)
+.claude/settings.local.json
+
+# OS
+.DS_Store
+
+# Secrets
+.env
+.env.*
