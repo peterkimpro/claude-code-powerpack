@@ -102,6 +102,20 @@ done
 
 Test on 2-3 files first, then run at scale.
 
+## Community Skills CLI
+
+```bash
+npx skills find                          # Interactive search
+npx skills add <owner/repo/skills> -y   # Install all skills from a repo
+npx skills add <owner/repo@skill> -y    # Install one specific skill
+npx skills list                          # List installed skills
+npx skills remove <skill>               # Remove a skill
+```
+
+Skills install directly into `.claude/skills/` — available immediately as `/skill-name`.
+
+Notable packages: `npx skills add google/adk-docs/skills -y` (Google ADK agent dev, 6 skills)
+
 ## Common Failure Patterns
 
 | Pattern | Symptom | Fix |

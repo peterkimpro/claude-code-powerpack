@@ -297,6 +297,30 @@ MCP (Model Context Protocol) servers extend Claude with external tools — file 
 
 See [MCP server directory](https://github.com/modelcontextprotocol/servers) for available servers.
 
+## Community Skills
+
+The `skills` CLI is a third-party package manager for installing community-published SKILL.md files directly into your `.claude/skills/` directory.
+
+```bash
+npx skills find                          # Interactive search of published skills
+npx skills add <owner/repo/skills> -y   # Install all skills from a repo
+npx skills add <owner/repo@skill> -y    # Install a specific skill
+npx skills list                          # List installed skills
+npx skills remove <skill>               # Remove a skill
+```
+
+Skills install into `.claude/skills/` and become immediately available as `/skill-name` commands in Claude Code.
+
+### Notable Skill Packages
+
+| Package | What it adds | Install |
+|---------|-------------|---------|
+| [google/adk-docs](https://github.com/google/adk-docs/tree/main/skills) | 6 skills for Google ADK agent development — API cheatsheet, dev/deploy/eval guides, scaffolding. Eliminates hallucinated ADK methods. | `npx skills add google/adk-docs/skills -y` |
+
+> **ADK skills** are only relevant if you're building with Google's Agent Development Kit (Python/TS/Go/Java). They give Claude accurate knowledge of ADK APIs, deployment to Agent Engine + Cloud Run, evaluation methodology, and observability setup.
+
+To publish your own skills for the community: create a `skills/` directory in any public GitHub repo with `SKILL.md` files following the standard format. Anyone can install them with `npx skills add <your-org/your-repo/skills>`.
+
 ## Plugins
 
 Claude Code supports plugins installable via `/plugin marketplace add <author/repo>`.
