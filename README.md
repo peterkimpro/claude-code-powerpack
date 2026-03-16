@@ -16,6 +16,7 @@ A drop-in file structure to get Claude Code running efficiently from day one —
     └── scaffold/          # /scaffold <name> — create module following existing patterns
 
 CLAUDE.md                  # Project instructions template (Claude reads this every session)
+cheatsheet.md              # Commands, shortcuts, prompting patterns at a glance
 hooks/
 └── README.md              # Lifecycle hooks with example scripts
 memory/
@@ -88,45 +89,153 @@ Edit `.claude/settings.json` to add your project's common commands:
 
 ## Key Concepts
 
+### Give Claude a Way to Verify Its Work
+
+The single highest-leverage thing you can do. Claude performs dramatically better when it can check itself — run tests, compare output, validate a build. Without verification criteria, Claude produces something that looks right but may not work, and you become the only feedback loop.
+
+```
+# Instead of:
+"implement a function that validates email addresses"
+
+# Do this:
+"write validateEmail(). test cases: user@example.com → true,
+invalid → false, user@.com → false. run the tests after implementing."
+```
+
+If you can't verify it, don't ship it.
+
 ### CLAUDE.md — Session Instructions
 
-Claude reads `CLAUDE.md` at the start of every session. Keep it under ~100 lines:
-- Long CLAUDE.md = more tokens consumed before Claude writes a single line of code
-- Be explicit about what Claude should NOT do (prevents expensive mistakes)
-- Tech stack + key commands are the highest-value content
+Claude reads `CLAUDE.md` at the start of every session. Run `/init` to auto-generate a starter from your codebase, then refine.
+
+**What to include vs. exclude:**
+
+| ✅ Include | ❌ Exclude |
+|-----------|-----------|
+| Bash commands Claude can't guess | Anything derivable from reading the code |
+| Code style rules that differ from defaults | Standard language conventions |
+| Testing instructions and preferred runners | Detailed API docs (link instead) |
+| Repo etiquette (branch naming, PR conventions) | Information that changes frequently |
+| Architectural decisions specific to this project | File-by-file codebase descriptions |
+| Environment quirks and required env vars | Self-evident practices ("write clean code") |
+
+If Claude keeps ignoring a rule, the file is too long — prune it or convert the rule to a hook. If Claude asks questions answered in CLAUDE.md, the phrasing is ambiguous — rewrite it.
+
+You can import other files directly:
+```markdown
+See @README.md for project overview
+See @docs/architecture.md for system design
+See @~/.claude/my-global-instructions.md for personal overrides
+```
+
+CLAUDE.md files stack: `~/.claude/CLAUDE.md` (global) → project root → parent dirs → child dirs (loaded on demand).
+
+### The 4-Step Workflow (Plan Mode)
+
+For tasks that touch multiple files or where the approach is unclear:
+
+1. **Explore** (Plan Mode) — read files, understand the system, no changes made
+2. **Plan** (Plan Mode) — ask Claude for a full implementation plan; `Ctrl+G` opens it in your editor
+3. **Implement** (Normal Mode) — code + verify against tests/output
+4. **Commit** — commit with descriptive message, open PR
+
+Toggle Plan Mode with `Shift+Tab`. Skip it for small, obvious changes — planning adds overhead.
 
 ### Permission Allowlist — Remove Friction
 
 Every unapproved command stops Claude and waits for you. The allowlist in `.claude/settings.json` auto-approves specific commands. Add commands you trust; keep destructive operations (push, reset, drop) out of it.
 
-### Agents — Specialized Subprocesses
-
-Agents in `.claude/agents/` are invoked by Claude automatically based on the task. They run with a focused system prompt and can be assigned specific tools and models. Use agents for:
-- Repeatable review tasks (security, code quality)
-- Tasks that need a different model (Opus for deep reasoning, Haiku for speed)
-- Keeping the main context window clean
-
-### Skills — Slash Commands
-
-Skills in `.claude/skills/` become `/skill-name` slash commands. They encode multi-step workflows so you don't re-explain them each session. Use skills for:
-- Repeated workflows (commit, deploy, scaffold)
-- Anything with more than 3 steps
-- Workflows that involve multiple agents
+Deny list blocks files Claude should never read — `node_modules`, lock files, and generated output are pure token waste.
 
 ### Hooks — Automatic Context Injection
 
-Hooks in `.claude/settings.json` run shell commands at key lifecycle points — before a prompt is processed, before/after a tool call, when Claude stops. Use them to:
+Hooks in `.claude/settings.json` run shell commands at key lifecycle points — before a prompt is processed, before/after a tool call, when Claude stops. Unlike CLAUDE.md instructions (advisory), hooks are deterministic and guaranteed to run. Use them to:
 - **Inject context automatically** — git branch, recent diff, env state — without saying it every session
 - **Block dangerous operations** — prevent writes to CI/infra files without confirmation
 - **Track behavior** — log which files Claude actually reads to tune your deny list
 
 See `hooks/README.md` for example scripts and the full event reference.
 
+### Agents — Specialized Subprocesses
+
+Agents in `.claude/agents/` run in their own context window with their own tools. They're the primary way to keep your main context clean — delegate investigation and review work to agents so their file reads don't accumulate in your session.
+
+Use agents for:
+- Repeatable review tasks (security, code quality)
+- Tasks that need a different model (Opus for deep reasoning, Haiku for speed)
+- Any research/investigation that would otherwise pollute main context
+
+### Skills — Slash Commands
+
+Skills in `.claude/skills/` become `/skill-name` slash commands. They encode multi-step workflows so you don't re-explain them each session. Add `disable-model-invocation: true` to the frontmatter for skills with side effects that should only run when explicitly invoked.
+
 ### Memory — Persistent Context
 
 Without memory, Claude starts from zero every session. The memory system at `memory/MEMORY.md` gives Claude a persistent understanding of your project, your preferences, and corrections you've given.
 
 The highest-value memory type is **feedback** — corrections that prevent Claude from making the same mistake twice.
+
+### Context Management
+
+Context is the fundamental constraint. As it fills, performance degrades.
+
+| Command | Use it when |
+|---------|------------|
+| `/clear` | Switching to an unrelated task |
+| `/compact <focus>` | Context is getting full but you want to continue |
+| `/rewind` or `Esc Esc` | Claude went off track — restore to a prior checkpoint |
+| `/btw <question>` | Quick side question that shouldn't pollute history |
+| `Esc` | Stop Claude mid-action and redirect |
+
+Rule of thumb: if you've corrected Claude on the same issue twice, `/clear` and write a better initial prompt — don't keep patching a polluted context.
+
+### Session Management
+
+```bash
+claude --continue    # Resume the most recent conversation
+claude --resume      # Pick from recent conversations
+```
+
+Use `/rename <name>` to name sessions (`oauth-migration`, `perf-debugging`) so you can find them across days. Treat sessions like branches — different workstreams get separate persistent contexts.
+
+### Non-Interactive Mode (CI / Scripts)
+
+```bash
+claude -p "prompt"                                  # One-off, plain text output
+claude -p "prompt" --output-format json             # Structured JSON
+claude -p "prompt" --output-format stream-json      # Streaming JSON
+claude -p "prompt" --allowedTools "Edit,Bash(git commit *)"  # Scope permissions
+```
+
+Fan-out pattern for large migrations:
+```bash
+for file in $(cat files.txt); do
+  claude -p "migrate $file from React to Vue. return OK or FAIL." \
+    --allowedTools "Edit,Bash(git commit *)"
+done
+```
+
+Test on 2–3 files first, then run at scale.
+
+### Parallel Sessions (Writer/Reviewer)
+
+Fresh context makes better reviewers — Claude won't be biased toward code it just wrote.
+
+| Session A (Writer) | Session B (Reviewer) |
+|---|---|
+| `implement rate limiter for API endpoints` | |
+| | `review @src/middleware/rateLimiter.ts — look for edge cases, race conditions, and consistency with existing middleware` |
+| `here's the review: [paste]. address these issues.` | |
+
+## Common Failure Patterns
+
+| Pattern | Fix |
+|---------|-----|
+| **Kitchen sink session** — jumped between tasks, context is polluted | `/clear` between unrelated tasks |
+| **Correction loop** — corrected the same issue 2+ times | `/clear` and rewrite the initial prompt with what you learned |
+| **Bloated CLAUDE.md** — Claude ignores rules buried in noise | Ruthlessly prune; convert rules to hooks for guaranteed enforcement |
+| **Trust gap** — implementation looks right but has edge cases | Always provide verification (tests, scripts, screenshots) |
+| **Infinite exploration** — Claude read 200 files, context is full | Scope investigations narrowly or delegate to a subagent |
 
 ## Customizing
 

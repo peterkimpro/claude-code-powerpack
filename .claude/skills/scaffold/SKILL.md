@@ -1,6 +1,7 @@
 ---
 name: scaffold
 description: Scaffold a new module, feature, or component following existing project patterns. Invoke with a name and brief description.
+disable-model-invocation: true
 ---
 
 Scaffold: $ARGUMENTS
