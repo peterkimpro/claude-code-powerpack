@@ -1,6 +1,8 @@
-# Claude Code Quickstart
+# Claude Code Powerpack
 
-A drop-in file structure to get Claude Code running efficiently from day one — fewer prompt iterations, persistent memory, and reusable workflows baked in.
+The most complete Claude Code starter kit — distilled from the leading open-source repos, Anthropic's own best practices docs, and community tools. Drop it into any project and hit the ground running: persistent memory, lifecycle hooks, agents, skills, context optimization, and reusable workflows all pre-configured.
+
+Built and maintained by [@peterkimpro](https://github.com/peterkimpro).
 
 ## What's Included
 
@@ -31,15 +33,15 @@ docs/
 ### 1. Clone this repo
 
 ```bash
-git clone https://github.com/peterkimpro/claude-code-quickstart.git
+git clone https://github.com/peterkimpro/claude-code-powerpack.git
 cd my-project
 ```
 
 ### 2. Copy the Claude config into your project
 
 ```bash
-cp -r claude-code-quickstart/.claude ./
-cp claude-code-quickstart/CLAUDE.md ./
+cp -r claude-code-powerpack/.claude ./
+cp claude-code-powerpack/CLAUDE.md ./
 ```
 
 ### 3. Fill in CLAUDE.md
@@ -59,7 +61,7 @@ Copy the memory templates to Claude's memory directory for your project:
 PROJECT_PATH=$(pwd | sed 's|/|-|g' | sed 's|^-||')
 MEMORY_DIR="$HOME/.claude/projects/$PROJECT_PATH/memory"
 mkdir -p "$MEMORY_DIR"
-cp claude-code-quickstart/memory/MEMORY.md "$MEMORY_DIR/"
+cp claude-code-powerpack/memory/MEMORY.md "$MEMORY_DIR/"
 ```
 
 ### 5. Configure your permission allowlist
