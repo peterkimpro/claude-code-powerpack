@@ -30,7 +30,7 @@ docs/
 ### 1. Clone this repo
 
 ```bash
-git clone https://github.com/peterkim676/claude-code-quickstart.git
+git clone https://github.com/peterkimpro/claude-code-quickstart.git
 cd my-project
 ```
 
