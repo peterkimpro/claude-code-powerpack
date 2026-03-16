@@ -6,7 +6,7 @@ A drop-in file structure to get Claude Code running efficiently from day one —
 
 ```
 .claude/
-├── settings.json          # Bash permission allowlist (auto-approve common commands)
+├── settings.json          # Permission allowlist + deny list + lifecycle hooks
 ├── agents/
 │   ├── security-reviewer  # Scans code for vulnerabilities before commit
 │   └── code-reviewer      # Quality/correctness review for PRs and diffs
@@ -16,9 +16,13 @@ A drop-in file structure to get Claude Code running efficiently from day one —
     └── scaffold/          # /scaffold <name> — create module following existing patterns
 
 CLAUDE.md                  # Project instructions template (Claude reads this every session)
+hooks/
+└── README.md              # Lifecycle hooks with example scripts
 memory/
 ├── MEMORY.md              # Memory index (loaded every session)
 └── README.md              # How the memory system works
+docs/
+└── adr/                   # Architecture Decision Records template
 ```
 
 ## Quick Setup
@@ -109,6 +113,15 @@ Skills in `.claude/skills/` become `/skill-name` slash commands. They encode mul
 - Anything with more than 3 steps
 - Workflows that involve multiple agents
 
+### Hooks — Automatic Context Injection
+
+Hooks in `.claude/settings.json` run shell commands at key lifecycle points — before a prompt is processed, before/after a tool call, when Claude stops. Use them to:
+- **Inject context automatically** — git branch, recent diff, env state — without saying it every session
+- **Block dangerous operations** — prevent writes to CI/infra files without confirmation
+- **Track behavior** — log which files Claude actually reads to tune your deny list
+
+See `hooks/README.md` for example scripts and the full event reference.
+
 ### Memory — Persistent Context
 
 Without memory, Claude starts from zero every session. The memory system at `memory/MEMORY.md` gives Claude a persistent understanding of your project, your preferences, and corrections you've given.
@@ -184,6 +197,21 @@ Claude Code supports plugins installable via `/plugin marketplace add <author/re
 | [claude-mem](https://github.com/thedotmack/claude-mem) | Persistent memory compression — SQLite + vector DB, auto-capture via hooks, ~10x token savings, web viewer | `/plugin marketplace add thedotmack/claude-mem` |
 
 See `memory/README.md` for when to use `claude-mem` vs. the built-in memory system.
+
+## Advanced Context Optimization
+
+For large or complex codebases where token usage becomes a bottleneck:
+
+**[CC-RLM](https://github.com/michaewahl/CC-RLM)** — A proxy layer that sits between Claude Code and a local LLM (Ollama/vLLM). Instead of dumping full files into context, it maintains a live structural model of the repo — import graphs, AST symbol slices, git diffs — and assembles a targeted context pack under 8K tokens per request.
+
+- **82% token reduction** vs. naive full-repo injection
+- **88% recall** — the right files actually make it in
+- **<200ms** context build latency
+- Self-improving: files Claude actually uses get higher relevance scores (persisted in SQLite)
+
+Requires Docker + Python 3.13 + Ollama or vLLM. Not a drop-in — it's infrastructure. The hooks pattern in `hooks/README.md` captures the same idea at a lighter weight.
+
+The key insight from CC-RLM: **code relevance is structural, not semantic.** Follow imports. Check the call graph. Look at the diff. Don't vector-search.
 
 ## Resources
 
