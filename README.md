@@ -20,7 +20,10 @@ Built and maintained by [@peterkimpro](https://github.com/peterkimpro).
 CLAUDE.md                  # Project instructions template (Claude reads this every session)
 cheatsheet.md              # Commands, shortcuts, prompting patterns at a glance
 hooks/
-└── README.md              # Lifecycle hooks with example scripts
+├── inject_context.py      # UserPromptSubmit — injects git branch + diff into every prompt
+├── pre_tool_use.py        # PreToolUse — blocks writes to protected paths (CI/infra)
+├── track_reads.py         # PostToolUse — logs files Claude reads to ~/.claude-reads.log
+└── README.md              # Lifecycle hook reference + customization guide
 memory/
 ├── MEMORY.md              # Memory index (loaded every session)
 └── README.md              # How the memory system works
@@ -41,6 +44,7 @@ cd my-project
 
 ```bash
 cp -r claude-code-powerpack/.claude ./
+cp -r claude-code-powerpack/hooks ./
 cp claude-code-powerpack/CLAUDE.md ./
 ```
 
